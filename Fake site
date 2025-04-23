@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Green Square Gamble</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      background-color: #1e1e2f;
+      color: white;
+      margin-top: 30px;
+    }
+
+    #game {
+      display: grid;
+      grid-template-columns: repeat(5, 70px);
+      gap: 12px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .cell {
+      width: 70px;
+      height: 70px;
+      background-color: #444;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: transform 0.3s, background-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .cell.clicked {
+      pointer-events: none;
+      transform: scale(1.1);
+    }
+
+    .green {
+      background-color: #4CAF50 !important;
+    }
+
+    .bomb {
+      background-color: #e53935 !important;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 25px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2980b9;
+    }
+
+    input[type="number"] {
+      padding: 8px;
+      border-radius: 5px;
+      border: none;
+      font-size: 16px;
+      width: 100px;
+      margin-top: 10px;
+    }
+
+    h1, h2 {
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Green Square Gamble</h1>
+  <h2>Money: $<span id="money">100</span></h2>
+  <h2>Multiplier: <span id="multiplier">1.00x</span></h2>
+
+  <div>
+    <label for="betInput">Bet Amount:</label>
+    <input type="number" id="betInput" value="10" min="1">
+    <button onclick="placeBet()">Place Bet</button>
+  </div>
+
+  <button onclick="cashOut()">Cash Out</button>
+  <button onclick="exitGame()">Exit</button>
+
+  <div id="game"></div>
+
+  <script>
+    const gridSize = 5;
+    const totalCells = gridSize * gridSize;
+    let baseMoney = 100;
+    let currentBet = 10;
+    let multiplier = 1;
+    let gameOver = false;
+    let bombs = [];
+
+    const game = document.getElementById("game");
+    const moneyDisplay = document.getElementById("money");
+    const multiplierDisplay = document.getElementById("multiplier");
+    const betInput = document.getElementById("betInput");
+
+    function generateBombs() {
+      bombs = [];
+      while (bombs.length < 3) {
+        let rand = Math.floor(Math.random() * totalCells);
+        if (!bombs.includes(rand)) bombs.push(rand);
+      }
+    }
+
+    function startGame() {
+      generateBombs();
+      gameOver = false;
+      multiplier = 1;
+      updateUI();
+
+      game.innerHTML = "";
+      for (let i = 0; i < totalCells; i++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.index = i;
+        cell.onclick = () => handleClick(cell, i);
+        game.appendChild(cell);
+      }
+    }
+
+    function handleClick(cell, index) {
+      if (gameOver) return;
+
+      cell.classList.add("clicked");
+
+      if (bombs.includes(index)) {
+        cell.classList.add("bomb");
+        cell.textContent = "💣";
+        gameOver = true;
+        multiplier = 0;
+        updateUI();
+        setTimeout(() => alert("Boom! You hit a bomb."), 300);
+      } else {
+        cell.classList.add("green");
+        cell.textContent = "+$";
+        multiplier = parseFloat((multiplier * 1.25).toFixed(2));
+        updateUI();
+      }
+    }
+
+    function updateUI() {
+      moneyDisplay.textContent = baseMoney;
+      multiplierDisplay.textContent = multiplier.toFixed(2) + "x";
+    }
+
+    function placeBet() {
+      let bet = parseInt(betInput.value);
+      if (bet <= 0 || bet > baseMoney) {
+        alert("Invalid bet amount.");
+        return;
+      }
+
+      currentBet = bet;
+      multiplier = 1;
+      startGame();
+    }
+
+    function cashOut() {
+      if (multiplier > 0 && !gameOver) {
+        let winnings = Math.floor(currentBet * multiplier);
+        baseMoney += winnings;
+        alert("You cashed out with $" + winnings);
+      } else {
+        alert("No winnings to cash out.");
+      }
+
+      updateUI();
+      startGame();
+    }
+
+    function exitGame() {
+      alert("You exited with $" + baseMoney);
+      game.innerHTML = "";
+    }
+
+    // Start default game with a bet
+    startGame();
+  </script>
+
+</body>
+</html>
